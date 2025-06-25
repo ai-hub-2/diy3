@@ -432,7 +432,13 @@ export const ControlPanel = ({ open, onClose }: ControlPanelProps) => {
           >
             <motion.div
               className={classNames(
-                'w-[1200px] h-[90vh]',
+                'settings-control-panel', // Added class for scoped styling
+                // Responsive width and height for the settings panel
+                'w-[calc(100vw-2rem)] h-[calc(100vh-2rem)]', // Default: almost full screen for very small devices
+                'sm:w-[calc(100vw-4rem)] sm:h-[calc(100vh-4rem)]', // Small screens: slightly more margin
+                'md:w-[80vw] md:h-[85vh]',                        // Medium screens
+                'lg:w-[1000px] lg:h-[90vh]',                      // Large screens (reduced from 1200px for better fit with common large screen res)
+                'max-w-[1200px] max-h-[1000px]',                  // Absolute max width and height
                 'bg-[#FAFAFA] dark:bg-[#0A0A0A]',
                 'rounded-2xl shadow-2xl',
                 'border border-[#E5E5E5] dark:border-[#1A1A1A]',

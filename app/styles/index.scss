@@ -124,6 +124,63 @@ body {
   */
 }
 
+/* Scoped Media Queries for Settings Control Panel */
+.settings-control-panel {
+  /* Targeting screens up to 480px for slightly more aggressive adjustments
+     in the settings panel header if needed, as it has many elements.
+     The 360px media query above will also apply for more general rules.
+  */
+  @media (max-width: 480px) {
+    // Example: Adjust padding and gaps in the settings panel header
+    > div > .flex.items-center.justify-between.px-6.py-4 { // This selector targets the header div
+      padding-left: 1rem; // Reduce from px-6 (1.5rem with 16px base, now 2.25rem with 12px base)
+      padding-right: 1rem;
+      flex-wrap: wrap; // Allow items to wrap if needed
+
+      // Target the right side of the header (mode toggle, avatar, close button)
+      > .flex.items-center.gap-6 {
+        gap: 0.75rem; // Reduce gap from gap-6 (1.5rem / 2.25rem)
+
+        // Target the mode toggle container specifically if it's too wide
+        > .min-w-\[140px\] {
+          min-width: auto; // Remove min-width
+          padding-right: 0.75rem; // Reduce padding
+        }
+        // Target avatar container
+        > .border-l.pl-6 {
+           padding-left: 0.75rem; // Reduce padding
+           border-left: none; // Optionally remove border if space is tight
+        }
+      }
+
+      // Target the title to reduce font size if necessary
+      .text-xl { // DialogTitle class
+        font-size: 1.125rem; // equivalent to text-lg (18px at 12px root), down from text-xl (20px at 12px root)
+      }
+    }
+
+    // Reduce padding for the main content area of the settings panel
+    .p-6 { // This class is used for the content area's padding
+      padding: 1rem;
+    }
+  }
+
+  @media (max-width: 360px) {
+    // Even more specific adjustments for 360px if the 480px rules are not enough
+    > div > .flex.items-center.justify-between.px-6.py-4 {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+
+       > .flex.items-center.gap-6 {
+        gap: 0.5rem;
+       }
+    }
+    .p-6 {
+      padding: 0.75rem;
+    }
+  }
+}
+
 /* Medium screens (e.g., tablets) */
 @media (min-width: 768px) {
   /* Adjustments for tablet layouts */
