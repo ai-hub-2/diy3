@@ -220,10 +220,13 @@
  * Hierarchy: Element Token -> (Element Token | Color Tokens) -> Primitives
  */
 :root {
-  --header-height: 54px;
-  --chat-max-width: 35rem;
-  --chat-min-width: 575px;
-  --workbench-width: min(calc(100% - var(--chat-min-width)), 2536px);
+  // Base font size for rem calculation: 1rem = 12px (assuming original base was 16px, this is a 25% reduction)
+  // This will be set in index.scss on the html element.
+
+  --header-height: 4.5rem; /* 54px / 12px */
+  --chat-max-width: 35rem; /* Remains rem */
+  --chat-min-width: 47.9167rem; /* 575px / 12px */
+  --workbench-width: min(calc(100% - var(--chat-min-width)), 211.3333rem); /* 2536px / 12px */
   --workbench-inner-width: var(--workbench-width);
   --workbench-left: calc(100% - var(--workbench-width));
 

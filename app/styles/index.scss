@@ -7,6 +7,10 @@
 @use 'components/editor.scss';
 @use 'components/toast.scss';
 
+html {
+  font-size: 12px; // Set base font size for rem units (approx 25% reduction from 16px)
+}
+
 html,
 body {
   height: 100%;
@@ -28,8 +32,8 @@ body {
 
   // WebKit scrollbar styling
   &::-webkit-scrollbar {
-    width: 2px;
-    height: 4px;
+    width: 0.17rem; /* 2px / 12px */
+    height: 0.33rem; /* 4px / 12px */
   }
 
   &::-webkit-scrollbar-track {
@@ -69,4 +73,79 @@ body {
 
   // Firefox support for inverted colors
   scrollbar-color: color-mix(in srgb, var(--bolt-elements-textPrimary), transparent 50%) transparent;
+}
+
+/* Media Queries */
+
+/* Small screens (e.g., mobile phones) */
+@media (max-width: 360px) {
+  html {
+    /* Further reduce base font size if needed, or use clamp() for critical elements */
+    /* Example: font-size: 11px; if 12px still feels too large */
+  }
+
+  body {
+    /* Ensure no horizontal scrollbars appear */
+    overflow-x: hidden;
+  }
+
+  /* Adjust global variables if they cause overflow or cramping */
+  :root {
+    /* Allow chat area to be narrower on small screens.
+       Initial value is 47.9167rem (575px at 12px root), which is too wide for 360px.
+       360px / 12px = 30rem. Let's use something like 28rem or calc(100vw - padding).
+       Using a value slightly less than full width to account for potential body/container padding.
+    */
+    --chat-min-width: calc(100vw - 2rem); /* Adjust 2rem based on actual page padding */
+    /* If workbench is to be used on mobile, its width might also need adjustment: */
+    /* --workbench-width: calc(100vw - 2rem); */
+  }
+
+  /* Component-specific overrides for small screens if UnoCSS classes are not sufficient */
+  /* Example:
+  .some-component {
+    padding: 0.5rem; // Reduce padding
+    font-size: 0.875rem; // Slightly smaller font
+  }
+
+  .button-group {
+    flex-direction: column; // Stack buttons
+    align-items: stretch;
+
+    > button {
+      width: 100%;
+      margin-bottom: 0.5rem;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+  */
+}
+
+/* Medium screens (e.g., tablets) */
+@media (min-width: 768px) {
+  /* Adjustments for tablet layouts */
+  /* Example:
+  :root {
+    // Slightly increase base font if the 25% reduction is too much for tablets
+    // html { font-size: 13px; }
+  }
+  .some-container {
+    // Potentially switch to a two-column layout if not handled by UnoCSS
+  }
+  */
+}
+
+/* Large screens (e.g., desktops) */
+@media (min-width: 1024px) {
+  /* Adjustments for desktop layouts */
+  /* UnoCSS lg: prefixes already handle many desktop styles. */
+  /* These would be for global overrides or specific SCSS-styled components. */
+  /* Example:
+  :root {
+    // Ensure --workbench-width and --chat-min-width provide a comfortable experience
+  }
+  */
 }

@@ -1,5 +1,6 @@
 $font-mono: ui-monospace, 'Fira Code', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-$code-font-size: 13px;
+// $code-font-size: 13px;
+$code-font-size: 1.0833rem; /* 13px / 12px */
 
 @mixin not-inside-actions {
   &:not(:has(:global(.actions)), :global(.actions *)) {
@@ -12,7 +13,8 @@ $code-font-size: 13px;
   color: var(--bolt-elements-textPrimary);
 
   > *:not(:last-child) {
-    margin-block-end: 16px;
+    // margin-block-end: 16px;
+    margin-block-end: 1.3333rem; /* 16px / 12px */
   }
 
   :global(.artifact) {
@@ -21,8 +23,10 @@ $code-font-size: 13px;
 
   :is(h1, h2, h3, h4, h5, h6) {
     @include not-inside-actions {
-      margin-block-start: 24px;
-      margin-block-end: 16px;
+      // margin-block-start: 24px;
+      // margin-block-end: 16px;
+      margin-block-start: 2rem; /* 24px / 12px */
+      margin-block-end: 1.3333rem; /* 16px / 12px */
       font-weight: 600;
       line-height: 1.25;
       color: var(--bolt-elements-textPrimary);
@@ -31,13 +35,13 @@ $code-font-size: 13px;
 
   h1 {
     font-size: 2em;
-    border-bottom: 1px solid var(--bolt-elements-borderColor);
+    border-bottom: 1px solid var(--bolt-elements-borderColor); /* Maintained 1px border */
     padding-bottom: 0.3em;
   }
 
   h2 {
     font-size: 1.5em;
-    border-bottom: 1px solid var(--bolt-elements-borderColor);
+    border-bottom: 1px solid var(--bolt-elements-borderColor); /* Maintained 1px border */
     padding-bottom: 0.3em;
   }
 
@@ -55,7 +59,7 @@ $code-font-size: 13px;
 
   h6 {
     font-size: 0.85em;
-    color: #6a737d;
+    color: #6a737d; /* Hardcoded color, not part of sizing task */
   }
 
   p {
@@ -63,7 +67,8 @@ $code-font-size: 13px;
 
     &:not(:last-of-type) {
       margin-block-start: 0;
-      margin-block-end: 16px;
+      // margin-block-end: 16px;
+      margin-block-end: 1.3333rem; /* 16px / 12px */
     }
   }
 
@@ -82,7 +87,8 @@ $code-font-size: 13px;
     font-size: $code-font-size;
 
     @include not-inside-actions {
-      border-radius: 6px;
+      // border-radius: 6px;
+      border-radius: 0.5rem; /* 6px / 12px */
       padding: 0.2em 0.4em;
       background-color: var(--bolt-elements-messages-inlineCode-background);
       color: var(--bolt-elements-messages-inlineCode-text);
@@ -90,8 +96,10 @@ $code-font-size: 13px;
   }
 
   pre {
-    padding: 20px 16px;
-    border-radius: 6px;
+    // padding: 20px 16px;
+    padding: 1.6667rem 1.3333rem; /* 20px / 12px, 16px / 12px */
+    // border-radius: 6px;
+    border-radius: 0.5rem; /* 6px / 12px */
   }
 
   pre:has(> code) {
@@ -113,7 +121,8 @@ $code-font-size: 13px;
     @include not-inside-actions {
       padding-left: 2em;
       margin-block-start: 0;
-      margin-block-end: 16px;
+      // margin-block-end: 16px;
+      margin-block-end: 1.3333rem; /* 16px / 12px */
     }
   }
 
@@ -132,11 +141,13 @@ $code-font-size: 13px;
   li {
     @include not-inside-actions {
       & + li {
-        margin-block-start: 8px;
+        // margin-block-start: 8px;
+        margin-block-start: 0.6667rem; /* 8px / 12px */
       }
 
       > *:not(:last-child) {
-        margin-block-end: 16px;
+        // margin-block-end: 16px;
+        margin-block-end: 1.3333rem; /* 16px / 12px */
       }
     }
   }
@@ -149,7 +160,8 @@ $code-font-size: 13px;
   hr {
     height: 0.25em;
     padding: 0;
-    margin: 24px 0;
+    // margin: 24px 0;
+    margin: 2rem 0; /* 24px / 12px */
     background-color: var(--bolt-elements-borderColor);
     border: 0;
   }
@@ -157,10 +169,12 @@ $code-font-size: 13px;
   table {
     border-collapse: collapse;
     width: 100%;
-    margin-block-end: 16px;
+    // margin-block-end: 16px;
+    margin-block-end: 1.3333rem; /* 16px / 12px */
 
     :is(th, td) {
-      padding: 6px 13px;
+      // padding: 6px 13px;
+      padding: 0.5rem 1.0833rem; /* 6px / 12px, 13px / 12px */
       border: 1px solid #dfe2e5;
     }
 

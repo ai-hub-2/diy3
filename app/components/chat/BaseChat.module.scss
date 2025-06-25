@@ -19,8 +19,8 @@
 }
 
 .PromptEffectContainer {
-  --prompt-container-offset: 50px;
-  --prompt-line-stroke-width: 1px;
+  --prompt-container-offset: 4.1667rem; /* 50px / 12px */
+  --prompt-line-stroke-width: 1px; /* Maintained as 1px for fine line, consider 0.0833rem if scaling is preferred */
   position: absolute;
   pointer-events: none;
   inset: calc(var(--prompt-container-offset) / -2);
@@ -33,11 +33,11 @@
   height: calc(100% - var(--prompt-container-offset) + var(--prompt-line-stroke-width));
   x: calc(var(--prompt-container-offset) / 2 - var(--prompt-line-stroke-width) / 2);
   y: calc(var(--prompt-container-offset) / 2 - var(--prompt-line-stroke-width) / 2);
-  rx: calc(8px - var(--prompt-line-stroke-width));
+  rx: calc(0.6667rem - var(--prompt-line-stroke-width)); /* 8px / 12px */
   fill: transparent;
   stroke-width: var(--prompt-line-stroke-width);
   stroke: url(#line-gradient);
-  stroke-dasharray: 35px 65px;
+  stroke-dasharray: 2.9167rem 5.4167rem; /* 35px / 12px, 65px / 12px */
   stroke-dashoffset: 10;
 }
 
