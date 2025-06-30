@@ -1,101 +1,39 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import type { TextSearchOptions, TextSearchOnProgressCallback, WebContainer } from '@webcontainer/api';
 import { workbenchStore } from '~/lib/stores/workbench';
-import { webcontainer } from '~/lib/webcontainer';
-import { WORK_DIR } from '~/utils/constants';
 import { debounce } from '~/utils/debounce';
+import SearchService from '~/lib/services/SearchService'; // Import the new SearchService
 
-interface DisplayMatch {
+// Interface for search results from SearchService
+interface SemanticMatch {
   path: string;
-  lineNumber: number;
-  previewText: string;
-  matchCharStart: number;
-  matchCharEnd: number;
+  lineNumber?: number; // Optional: if chunks are associated with lines
+  score: number;
+  text: string; // The matched chunk of text
 }
 
-async function performTextSearch(
-  instance: WebContainer,
-  query: string,
-  options: Omit<TextSearchOptions, 'folders'>,
-  onProgress: (results: DisplayMatch[]) => void,
-): Promise<void> {
-  if (!instance || typeof instance.internal?.textSearch !== 'function') {
-    console.error('WebContainer instance not available or internal searchText method is missing/not a function.');
-
-    return;
-  }
-
-  const searchOptions: TextSearchOptions = {
-    ...options,
-    folders: [WORK_DIR],
-  };
-
-  const progressCallback: TextSearchOnProgressCallback = (filePath: any, apiMatches: any[]) => {
-    const displayMatches: DisplayMatch[] = [];
-
-    apiMatches.forEach((apiMatch: { preview: { text: string; matches: string | any[] }; ranges: any[] }) => {
-      const previewLines = apiMatch.preview.text.split('\n');
-
-      apiMatch.ranges.forEach((range: { startLineNumber: number; startColumn: any; endColumn: any }) => {
-        let previewLineText = '(Preview line not found)';
-        let lineIndexInPreview = -1;
-
-        if (apiMatch.preview.matches.length > 0) {
-          const previewStartLine = apiMatch.preview.matches[0].startLineNumber;
-          lineIndexInPreview = range.startLineNumber - previewStartLine;
-        }
-
-        if (lineIndexInPreview >= 0 && lineIndexInPreview < previewLines.length) {
-          previewLineText = previewLines[lineIndexInPreview];
-        } else {
-          previewLineText = previewLines[0] ?? '(Preview unavailable)';
-        }
-
-        displayMatches.push({
-          path: filePath,
-          lineNumber: range.startLineNumber,
-          previewText: previewLineText,
-          matchCharStart: range.startColumn,
-          matchCharEnd: range.endColumn,
-        });
-      });
-    });
-
-    if (displayMatches.length > 0) {
-      onProgress(displayMatches);
-    }
-  };
-
-  try {
-    await instance.internal.textSearch(query, searchOptions, progressCallback);
-  } catch (error) {
-    console.error('Error during internal text search:', error);
-  }
-}
-
-function groupResultsByFile(results: DisplayMatch[]): Record<string, DisplayMatch[]> {
+// Helper function to group results by file
+function groupSemanticResultsByFile(results: SemanticMatch[]): Record<string, SemanticMatch[]> {
   return results.reduce(
     (acc, result) => {
       if (!acc[result.path]) {
         acc[result.path] = [];
       }
-
       acc[result.path].push(result);
-
       return acc;
     },
-    {} as Record<string, DisplayMatch[]>,
+    {} as Record<string, SemanticMatch[]>,
   );
 }
 
 export function Search() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<DisplayMatch[]>([]);
+  const [searchResults, setSearchResults] = useState<SemanticMatch[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
   const [hasSearched, setHasSearched] = useState(false);
+  const searchService = SearchService.getInstance();
 
-  const groupedResults = useMemo(() => groupResultsByFile(searchResults), [searchResults]);
+  const groupedResults = useMemo(() => groupSemanticResultsByFile(searchResults), [searchResults]);
 
   useEffect(() => {
     if (searchResults.length > 0) {
@@ -107,57 +45,42 @@ export function Search() {
     }
   }, [groupedResults, searchResults]);
 
-  const handleSearch = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      setIsSearching(false);
-      setExpandedFiles({});
-      setHasSearched(false);
-
-      return;
-    }
-
-    setIsSearching(true);
-    setSearchResults([]);
-    setExpandedFiles({});
-    setHasSearched(true);
-
-    const minLoaderTime = 300; // ms
-    const start = Date.now();
-
-    try {
-      const instance = await webcontainer;
-      const options: Omit<TextSearchOptions, 'folders'> = {
-        homeDir: WORK_DIR, // Adjust this path as needed
-        includes: ['**/*.*'],
-        excludes: ['**/node_modules/**', '**/package-lock.json', '**/.git/**', '**/dist/**', '**/*.lock'],
-        gitignore: true,
-        requireGit: false,
-        globalIgnoreFiles: true,
-        ignoreSymlinks: false,
-        resultLimit: 500,
-        isRegex: false,
-        caseSensitive: false,
-        isWordMatch: false,
-      };
-
-      const progressHandler = (batchResults: DisplayMatch[]) => {
-        setSearchResults((prevResults) => [...prevResults, ...batchResults]);
-      };
-
-      await performTextSearch(instance, query, options, progressHandler);
-    } catch (error) {
-      console.error('Failed to initiate search:', error);
-    } finally {
-      const elapsed = Date.now() - start;
-
-      if (elapsed < minLoaderTime) {
-        setTimeout(() => setIsSearching(false), minLoaderTime - elapsed);
-      } else {
+  const handleSearch = useCallback(
+    async (query: string) => {
+      if (!query.trim()) {
+        setSearchResults([]);
         setIsSearching(false);
+        setExpandedFiles({});
+        setHasSearched(false);
+        return;
       }
-    }
-  }, []);
+
+      setIsSearching(true);
+      setSearchResults([]); // Clear previous results
+      setExpandedFiles({});
+      setHasSearched(true);
+
+      const minLoaderTime = 300; // ms
+      const start = Date.now();
+
+      try {
+        // Use the SearchService
+        const results = await searchService.search(query);
+        setSearchResults(results);
+      } catch (error) {
+        console.error('Failed to perform semantic search:', error);
+        setSearchResults([]); // Ensure results are cleared on error
+      } finally {
+        const elapsed = Date.now() - start;
+        if (elapsed < minLoaderTime) {
+          setTimeout(() => setIsSearching(false), minLoaderTime - elapsed);
+        } else {
+          setIsSearching(false);
+        }
+      }
+    },
+    [searchService],
+  ); // Added searchService to dependencies
 
   const debouncedSearch = useCallback(debounce(handleSearch, 300), [handleSearch]);
 
@@ -167,15 +90,53 @@ export function Search() {
 
   const handleResultClick = (filePath: string, line?: number) => {
     workbenchStore.setSelectedFile(filePath);
-
-    /*
-     * Adjust line number to be 0-based if it's defined
-     * The search results use 1-based line numbers, but CodeMirrorEditor expects 0-based
-     */
-    const adjustedLine = typeof line === 'number' ? Math.max(0, line - 1) : undefined;
-
+    // For semantic search, line number might be less precise or chunk-based.
+    // If your SearchService provides line numbers, use them. Otherwise, you might scroll to top of file.
+    const adjustedLine = typeof line === 'number' ? Math.max(0, line - 1) : 0; // Default to top if no line
     workbenchStore.setCurrentDocumentScrollPosition({ line: adjustedLine, column: 0 });
   };
+
+  // Effect to listen for selected file changes and index them
+  useEffect(() => {
+    const unsubscribe = workbenchStore.selectedFile.subscribe(async (selectedFilePath) => {
+      if (selectedFilePath) {
+        const file = workbenchStore.files.get()[selectedFilePath];
+        if (file?.type === 'file' && !file.isBinary && file.content && !searchService.isFileIndexed(selectedFilePath)) {
+          console.log(`Indexing opened file: ${selectedFilePath}`);
+          await searchService.indexFile(selectedFilePath, file.content);
+          console.log(`File ${selectedFilePath} indexed. Total indexed: ${searchService.getIndexedFilesCount()}`);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, [searchService]);
+
+
+  // Keyboard shortcut for search (Ctrl+K or /)
+  // This might be better placed in a global layout component
+  // For now, adding it here for demonstration if this component is always mounted
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const targetElement = event.target as HTMLElement;
+      const isInputFocused = ['INPUT', 'TEXTAREA', 'SELECT'].includes(targetElement.tagName) || targetElement.isContentEditable;
+
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault();
+        // Assuming the search input should be focused
+        document.querySelector<HTMLInputElement>('.search-input-field')?.focus();
+      }
+      if (event.key === '/' && !isInputFocused) {
+        event.preventDefault();
+         // Assuming the search input should be focused
+        document.querySelector<HTMLInputElement>('.search-input-field')?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
 
   return (
     <div className="flex flex-col h-full bg-bolt-elements-background-depth-2">
@@ -186,8 +147,8 @@ export function Search() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search"
-            className="w-full px-2 py-1 rounded-md bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary focus:outline-none transition-all"
+            placeholder="Semantic Search (e.g., 'user authentication logic')"
+            className="search-input-field w-full px-2 py-1 rounded-md bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary focus:outline-none transition-all"
           />
         </div>
       </div>
@@ -220,33 +181,21 @@ export function Search() {
               </button>
               {expandedFiles[file] && (
                 <div className="">
-                  {groupedResults[file].map((match, idx) => {
-                    const contextChars = 7;
-                    const isStart = match.matchCharStart <= contextChars;
-                    const previewStart = isStart ? 0 : match.matchCharStart - contextChars;
-                    const previewText = match.previewText.slice(previewStart);
-                    const matchStart = isStart ? match.matchCharStart : contextChars;
-                    const matchEnd = isStart
-                      ? match.matchCharEnd
-                      : contextChars + (match.matchCharEnd - match.matchCharStart);
-
-                    return (
-                      <div
-                        key={idx}
-                        className="hover:bg-bolt-elements-background-depth-3 cursor-pointer transition-colors pl-6 py-1"
-                        onClick={() => handleResultClick(match.path, match.lineNumber)}
-                      >
-                        <pre className="font-mono text-xs text-bolt-elements-textTertiary truncate">
-                          {!isStart && <span>...</span>}
-                          {previewText.slice(0, matchStart)}
-                          <span className="bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent rounded px-1">
-                            {previewText.slice(matchStart, matchEnd)}
-                          </span>
-                          {previewText.slice(matchEnd)}
-                        </pre>
-                      </div>
-                    );
-                  })}
+                  {groupedResults[file].map((match, idx) => (
+                    <div
+                      key={idx}
+                      className="hover:bg-bolt-elements-background-depth-3 cursor-pointer transition-colors pl-6 py-1"
+                      onClick={() => handleResultClick(match.path, match.lineNumber)}
+                      title={`Score: ${match.score.toFixed(3)}`}
+                    >
+                      <pre className="font-mono text-xs text-bolt-elements-textTertiary whitespace-pre-wrap break-words">
+                        {/* For semantic matches, we display the matched chunk directly */}
+                        {/* Highlighting the exact query within the chunk is more complex with embeddings */}
+                        {/* and might not always be directly applicable. */}
+                        {match.text}
+                      </pre>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

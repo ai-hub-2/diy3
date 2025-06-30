@@ -33,6 +33,8 @@ if (!import.meta.env.SSR) {
         webcontainerContext.loaded = true;
 
         const { workbenchStore } = await import('~/lib/stores/workbench');
+        const SearchService = (await import('~/lib/services/SearchService')).default;
+
 
         // Listen for preview errors
         webcontainer.on('preview-message', (message) => {
@@ -51,6 +53,25 @@ if (!import.meta.env.SSR) {
             });
           }
         });
+
+        // Initial file indexing for semantic search
+        // This is a simplified approach. For large projects, consider a more
+        // sophisticated background process or on-demand indexing.
+        console.log('Starting initial file indexing for semantic search...');
+        const searchService = SearchService.getInstance();
+        const files = workbenchStore.files.get(); // Assuming this gives all files
+        let count = 0;
+        for (const [path, dirent] of Object.entries(files)) {
+          if (dirent?.type === 'file' && !dirent.isBinary && dirent.content) {
+            // Check if already indexed to avoid re-indexing on HMR or similar
+            if (!searchService.isFileIndexed(path)) {
+              await searchService.indexFile(path, dirent.content);
+              count++;
+            }
+          }
+        }
+        console.log(`Initial indexing complete. ${count} new files indexed.`);
+        console.log(`Total files in search index: ${searchService.getIndexedFilesCount()}`);
 
         return webcontainer;
       });
